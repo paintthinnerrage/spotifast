@@ -304,6 +304,10 @@ pub fn shortcuts(locale: Locale) -> Vec<(Cow<'static, str>, Cow<'static, str>)> 
             gettext(locale, "Close the window"),
         ),
         (keys(QUIT_SHORTCUT), gettext(locale, "Quit")),
+        (
+            keys("F"),
+            gettext(locale, "Letter hints on buttons and links"),
+        ),
     ]
 }
 

@@ -9827,6 +9827,7 @@ impl App {
         // the replacement window, but drawing it here would resize this one
         // before eframe saves its geometry. attach clears the switch intent
         // only once the replacement exists.
+        crate::ui::hints::install(ui.ctx());
         if self.switch_intent {
             return;
         }
