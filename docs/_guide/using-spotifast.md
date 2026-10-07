@@ -228,16 +228,16 @@ Winamp skins do not yet have equivalent accessibility coverage.
 | `Ctrl+,` | Settings |
 | `Ctrl+/` or `?` | All shortcuts |
 | `Ctrl+Q` | Quit |
-| `F` | Letter hints on buttons and links |
+| `N` | Letter hints on buttons and links |
 
 On macOS, `Cmd` replaces `Ctrl`. A focused text field keeps its usual keys
 for its own text.
 
-`F` works like Vimium C's alphabet hints. Every button and link you can see
+`N` works like Vimium C's alphabet hints. Every button and link you can see
 gets a short label made from the home-row letters `s a d f j k l e w c m p g h`.
 The labels are capitals; type them in lowercase. When one control matches,
 it is pressed. Backspace deletes the last letter, Space cycles labels that
-overlap, and Esc closes the overlay. A text field keeps `F` for itself.
+overlap, and Esc closes the overlay. A text field keeps `N` for itself.
 
 ## Controlling it from the command line
 

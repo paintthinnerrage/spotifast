@@ -1,6 +1,6 @@
 //! Alphabet hints, in the style of Vimium C.
 //!
-//! `F` (when a text field does not have the keyboard) names every visible
+//! `N` (when a text field does not have the keyboard) names every visible
 //! clickable control with a short label drawn from the home row. The labels
 //! are capitals; the keys are lowercase. Typing narrows the set, and the
 //! last remaining control is pressed. Backspace deletes a letter, Space cycles
@@ -85,7 +85,7 @@ impl Plugin for LinkHints {
                 let opens = matches!(
                     event,
                     Event::Key {
-                        key: Key::F,
+                        key: Key::N,
                         pressed: true,
                         repeat: false,
                         modifiers,
@@ -146,7 +146,7 @@ impl LinkHints {
         self.typed.clear();
         self.stack = 0;
         // The tree is built at the start of the pass, and this hook runs
-        // before that, so the labels exist on the frame after `F`.
+        // before that, so the labels exist on the frame after `N`.
         ctx.enable_accesskit();
         ctx.request_repaint();
     }
@@ -558,15 +558,15 @@ mod tests {
         install(&ctx);
         let clicked = std::cell::Cell::new("");
         frame(&ctx, &clicked, vec![]);
-        let output = frame(&ctx, &clicked, vec![press(Key::F)]);
-        // Captured at the end of the `F` frame, from the tree that frame built.
+        let output = frame(&ctx, &clicked, vec![press(Key::N)]);
+        // Captured at the end of the `N` frame, from the tree that frame built.
         let hints = ctx
             .plugin::<LinkHints>()
             .lock()
             .viewports
             .get(&ViewportId::ROOT)
             .cloned()
-            .expect("labels after F");
+            .expect("labels after N");
         assert!(hints.len() >= 2, "both buttons get a label");
         let tree = output
             .platform_output
@@ -596,7 +596,7 @@ mod tests {
     }
 
     #[test]
-    fn a_text_field_keeps_f() {
+    fn a_text_field_keeps_n() {
         let ctx = Context::default();
         install(&ctx);
         let clicked = std::cell::Cell::new("");
@@ -621,10 +621,10 @@ mod tests {
         draw(vec![]);
         ctx.memory_mut(|memory| memory.request_focus(field));
         draw(vec![]);
-        draw(vec![press(Key::F)]);
+        draw(vec![press(Key::N)]);
         assert!(
             !ctx.plugin::<LinkHints>().lock().active,
-            "F types into the field instead of opening hints"
+            "N types into the field instead of opening hints"
         );
         assert_eq!(clicked.get(), "");
     }
@@ -666,7 +666,7 @@ mod tests {
         let ctx = Context::default();
         install(&ctx);
         let clicked = std::cell::Cell::new("");
-        frame(&ctx, &clicked, vec![press(Key::F)]);
+        frame(&ctx, &clicked, vec![press(Key::N)]);
         frame(&ctx, &clicked, vec![press(Key::Escape)]);
         assert!(!ctx.plugin::<LinkHints>().lock().active);
         assert_eq!(clicked.get(), "");
