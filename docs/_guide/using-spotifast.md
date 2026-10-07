@@ -359,7 +359,15 @@ to treble with peaks that hang and fall, and **Waveform** draws the sound's
 wave as a glowing line, both in colours drawn from the cover. It follows the equalizer, not the volume, and moves only while the
 song plays on this computer. It is off by default. Clicking the player
 bar's empty space switches it, as Winamp's visualizer did: off, then
-Spectrum, then Waveform, then off again.
+Spectrum, then Waveform, then off again. Turn off **Click the player bar to
+change it** to keep that click from doing anything, so the visualizer stays
+where the setting puts it.
+
+**Smooth scrolling**, also in **Settings > Appearance**, glides to whatever
+you scroll to. Turn it off and scrolling lands at once: a row brought into
+view jumps there, the lyrics cut to the line being sung, and a touchpad
+gesture stops when your fingers lift instead of carrying on. A wheel notch
+still scrolls the same distance.
 
 In **Settings > Appearance**, **Compact track list** puts each song on one
 line. In narrow lists, the added date follows the artist credits with a spaced

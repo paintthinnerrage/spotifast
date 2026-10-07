@@ -805,6 +805,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let middle_click = gettext(locale, "Middle-click autoscroll");
     let custom_titlebar = gettext(locale, "Custom title bar");
     let player_bar_vis = gettext(locale, "Player bar visualizer");
+    let player_bar_vis_click = gettext(locale, "Click the player bar to change it");
+    let smooth_scrolling = gettext(locale, "Smooth scrolling");
     let appearance_rows = [
         RowText::new(theme_title.clone(), {
             let detail = theme::catalog_detail(
@@ -880,6 +882,20 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             gettext(
                 locale,
                 "Show the song moving behind the player bar's controls while it plays here.",
+            ),
+        ),
+        RowText::new(
+            player_bar_vis_click.clone(),
+            gettext(
+                locale,
+                "Click the player bar's empty space to move to the next visualizer, as Winamp did.",
+            ),
+        ),
+        RowText::new(
+            smooth_scrolling.clone(),
+            gettext(
+                locale,
+                "Glide to what you scroll to. Off lands at once: rows jump into view, the lyrics cut to the line being sung, and a touchpad stops when your fingers lift.",
             ),
         ),
     ];
@@ -1066,6 +1082,44 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     },
                 );
             }
+            filtered_row(
+                ui,
+                &palette,
+                &needle,
+                &appearance,
+                &appearance_rows[9],
+                |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &player_bar_vis_click,
+                        &mut app.settings.player_bar_vis_click,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                },
+            );
+            filtered_row(
+                ui,
+                &palette,
+                &needle,
+                &appearance,
+                &appearance_rows[10],
+                |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &smooth_scrolling,
+                        &mut app.settings.smooth_scrolling,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                },
+            );
             filtered_row(
                 ui,
                 &palette,

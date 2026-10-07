@@ -3258,6 +3258,22 @@ impl App {
         }
     }
 
+    /// Keeps egui's scroll animation in step with the setting. Every
+    /// `scroll_to_me` and `scroll_to_rect` in the interface reads it, so one
+    /// place decides whether a row brought into view glides there or lands
+    /// at once. Written only on a change, because the style is shared.
+    fn apply_scroll_animation(&self, ctx: &egui::Context) {
+        let wanted = if self.settings.smooth_scrolling {
+            egui::style::ScrollAnimation::default()
+        } else {
+            egui::style::ScrollAnimation::none()
+        };
+        if ctx.global_style().scroll_animation != wanted {
+            // Both themes, so switching appearance keeps the choice.
+            ctx.all_styles_mut(|style| style.scroll_animation = wanted);
+        }
+    }
+
     fn handle_tray(&mut self) {
         use fastframe_tray::Event;
         let Some(events) = self.tray.as_ref().map(fastframe_tray::Tray::events) else {
@@ -9837,11 +9853,21 @@ impl App {
         self.apply_theme(ctx);
         let autoscroll_on = crate::autoscroll::enabled(self.settings.middle_click_autoscroll);
         self.autoscroll.begin(ctx, autoscroll_on);
+        self.apply_scroll_animation(ctx);
         if self.autoscroll.active() {
             self.scrolling.stop();
             ctx.input_mut(|input| input.smooth_scroll_delta = egui::Vec2::ZERO);
-        } else {
+        } else if self.settings.smooth_scrolling {
             self.scrolling.apply(ctx);
+        } else {
+            // Without the glide a lifted gesture stops where the fingers
+            // left it, and a touchpad's deltas arrive as the platform sent
+            // them. The wheel keeps its step: that is how far a notch goes,
+            // not how smoothly it gets there.
+            self.scrolling.stop();
+            ctx.options_mut(|options| {
+                options.input_options.line_scroll_speed = fastframe_scroll::WHEEL_STEP;
+            });
         }
         if self.lyrics_fullscreen_restoring.is_some()
             && self.lyrics_fullscreen_restoring == ctx.input(|input| input.viewport().fullscreen)

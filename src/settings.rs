@@ -309,6 +309,10 @@ pub struct Settings {
     pub accent_from_art: bool,
     /// A spectrum or waveform of the playing song behind the player bar.
     pub player_bar_vis: PlayerBarVis,
+    /// Whether a click on the player bar's empty space moves to the next
+    /// visualizer, as Winamp's visualizer cycled. Off leaves the mode to the
+    /// setting alone, so a stray click cannot bring a hidden visualizer back.
+    pub player_bar_vis_click: bool,
     /// Last local volume, 0..=65535.
     pub volume: u16,
     /// Whether the library sidebar is visible.
@@ -328,6 +332,11 @@ pub struct Settings {
     /// Linux desktops usually paste the primary selection on middle click.
     /// Windows always autoscrolls and macOS never does.
     pub middle_click_autoscroll: bool,
+    /// Animate scrolling. Off makes every scroll land at once: a row brought
+    /// into view jumps there instead of gliding, the lyrics cut to the line
+    /// being sung, and a lifted touchpad gesture stops where the fingers left
+    /// it rather than carrying on.
+    pub smooth_scrolling: bool,
     pub search_history: Vec<String>,
     pub show_shortcut_hints: bool,
     /// An optional personal Spotify Web API application id. The shared
@@ -477,6 +486,7 @@ impl Default for Settings {
             home: HomeSettings::default(),
             accent_from_art: true,
             player_bar_vis: PlayerBarVis::Off,
+            player_bar_vis_click: true,
             volume: (u16::MAX as u32 * 70 / 100) as u16,
             sidebar_visible: true,
             art_expanded: false,
@@ -487,6 +497,7 @@ impl Default for Settings {
             queue_width: 360.0,
             tracklist_compact: false,
             middle_click_autoscroll: false,
+            smooth_scrolling: true,
             search_history: Vec::new(),
             show_shortcut_hints: true,
             web_client_id: None,
@@ -1210,6 +1221,28 @@ mod tests {
         let json = serde_json::to_string(&settings).unwrap();
         let restored: Settings = serde_json::from_str(&json).unwrap();
         assert!(restored.sidebar_grid);
+    }
+
+    /// Both are opt-outs of behaviour that shipped before them, so a file
+    /// written by an older Spotifast keeps that behaviour.
+    #[test]
+    fn older_settings_keep_the_visualizer_click_and_smooth_scrolling() {
+        let settings: Settings = serde_json::from_str("{}").unwrap();
+        assert!(settings.player_bar_vis_click);
+        assert!(settings.smooth_scrolling);
+    }
+
+    #[test]
+    fn turning_off_the_visualizer_click_and_smooth_scrolling_round_trips() {
+        let settings = Settings {
+            player_bar_vis_click: false,
+            smooth_scrolling: false,
+            ..Settings::default()
+        };
+        let json = serde_json::to_string(&settings).unwrap();
+        let restored: Settings = serde_json::from_str(&json).unwrap();
+        assert!(!restored.player_bar_vis_click);
+        assert!(!restored.smooth_scrolling);
     }
 
     #[test]

@@ -4666,6 +4666,55 @@ mod tests {
             "{:?}",
             app.actions
         );
+
+        // Turned off, the empty space takes no click of its own, so a hidden
+        // visualizer cannot come back by accident.
+        app.actions.clear();
+        app.settings.player_bar_vis_click = false;
+        draw(&mut app, vec![]);
+        draw(&mut app, pointer_click(empty, egui::PointerButton::Primary));
+        assert!(
+            !app.actions
+                .iter()
+                .any(|action| matches!(action, Action::CyclePlayerBarVis)),
+            "{:?}",
+            app.actions
+        );
+        app.backend.shutdown();
+    }
+
+    /// Smooth scrolling is one style value every `scroll_to_me` in the
+    /// interface reads, and the frame keeps it in step with the setting in
+    /// both themes, so switching appearance does not bring the glide back.
+    #[cfg(feature = "demo")]
+    #[test]
+    fn turning_off_smooth_scrolling_takes_the_scroll_animation_out() {
+        use egui::style::ScrollAnimation;
+        let (ctx, mut app) = accessible_app("smooth-scrolling");
+        accessible_frame(&ctx, &mut app, vec![]);
+        assert_eq!(
+            ctx.global_style().scroll_animation,
+            ScrollAnimation::default(),
+            "scrolling glides until the setting says otherwise"
+        );
+
+        app.settings.smooth_scrolling = false;
+        accessible_frame(&ctx, &mut app, vec![]);
+        for theme in [egui::Theme::Dark, egui::Theme::Light] {
+            assert_eq!(
+                ctx.style_of(theme).scroll_animation,
+                ScrollAnimation::none(),
+                "{theme:?} scrolls without an animation"
+            );
+        }
+
+        app.settings.smooth_scrolling = true;
+        accessible_frame(&ctx, &mut app, vec![]);
+        assert_eq!(
+            ctx.global_style().scroll_animation,
+            ScrollAnimation::default(),
+            "turning it back on restores the glide"
+        );
         app.backend.shutdown();
     }
 

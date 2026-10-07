@@ -664,7 +664,13 @@ fn fullscreen_contents(app: &mut App, ui: &mut egui::Ui) {
         });
     let following = app.lyrics_following && !manual_scroll;
     let follow = following && app.lyrics_line_shown != Some(active);
-    let animation = egui::style::ScrollAnimation::duration(0.45);
+    // The sung line glides into place over its own, slower duration than the
+    // rest of the interface. Without smooth scrolling it cuts to the line.
+    let animation = if app.settings.smooth_scrolling {
+        egui::style::ScrollAnimation::duration(0.45)
+    } else {
+        egui::style::ScrollAnimation::none()
+    };
     let size = (ui.available_width() * 0.046).clamp(28.0, 42.0);
     // The line being sung brightens; all lines keep the same font metrics
     // so highlighting cannot rewrap the words during a transition.
