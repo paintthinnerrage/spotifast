@@ -6,7 +6,7 @@ use crate::api::models::pick_image;
 use crate::app::App;
 use crate::i18n::{Locale, gettext};
 use crate::model::{Action, Dialog, DragEntry, DragTrack, Loadable, Page};
-use crate::settings::{LIKED_SONGS_KEY, LibraryShelf as Filter, LibrarySort};
+use crate::settings::{LIKED_SONGS_KEY, LibraryLayout, LibraryShelf as Filter, LibrarySort};
 use crate::theme::{self, Icon, Palette};
 
 const DEFAULT_ROW_HEIGHT: f32 = 60.0;
@@ -890,15 +890,19 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
             {
                 app.actions.push(Action::ToggleSidebar);
             }
-            let grid = app.settings.sidebar_grid;
-            let (icon, label) = if grid {
-                (Icon::LayoutList, gettext(locale, "Show as list"))
-            } else {
-                (Icon::LayoutGrid, gettext(locale, "Show as grid"))
+            // One button, three layouts: it names and draws the one the next
+            // press gives, not the one on screen.
+            let next = LibraryLayout::from_settings(&app.settings).next();
+            let (icon, label) = match next {
+                LibraryLayout::Grid => (Icon::LayoutGrid, gettext(locale, "Show as grid")),
+                LibraryLayout::List => (Icon::LayoutList, gettext(locale, "Show as list")),
+                LibraryLayout::Compact => {
+                    (Icon::ListCompact, gettext(locale, "Show as compact list"))
+                }
             };
             if theme::icon_button(ui, icon, 16.0, palette.secondary, palette.text, &label).clicked()
             {
-                app.actions.push(Action::SetLibraryGrid(!grid));
+                app.actions.push(Action::SetLibraryLayout(next));
             }
             // One item never deserved a menu: the plus creates directly.
             if theme::icon_button(
@@ -1211,7 +1215,8 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                     },
                 );
             }
-            if app.settings.sidebar_grid {
+            let layout = LibraryLayout::from_settings(&app.settings);
+            if layout == LibraryLayout::Grid {
                 library_grid(
                     app,
                     ui,
@@ -1228,7 +1233,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                 return;
             }
 
-            let compact = app.settings.sidebar_compact;
+            let compact = layout == LibraryLayout::Compact;
             let row_height = if compact {
                 COMPACT_ROW_HEIGHT
             } else {
@@ -1258,9 +1263,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
             let art = app.backend.art().clone();
             super::widgets::virtual_rows(ui, entries.len(), row_height, |ui, index| {
                 let entry = &entries[index];
-                if !app.settings.sidebar_compact
-                    && let Some(image) = &entry.image
-                {
+                if !compact && let Some(image) = &entry.image {
                     // Prepare the enlarged preview before this row is opened.
                     app.softened_covers.texture(ui.ctx(), &art, image);
                 }

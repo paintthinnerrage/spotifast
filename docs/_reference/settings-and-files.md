@@ -237,7 +237,7 @@ main fields are:
 | `sidebar_order` | `[]` | Saved local playlist arrangement, including an unpinned Liked Songs, retained when another sort is selected |
 | `pinned_contexts` | `[]` | Local Library pin order; Liked Songs uses `spotifast:liked-songs`, a local key never sent to Spotify |
 | `liked_songs_pinned` | `true` | Keep Liked Songs in the pin block; older settings place it first until moved |
-| `sidebar_compact` | `false` | Names only in the library sidebar, no covers |
+| `sidebar_compact` | `false` | Names only in the library sidebar, no covers. The sidebar's layout button cycles this and `sidebar_grid`: neither set is the list, `sidebar_grid` is the cover grid, and this is the compact list. `sidebar_grid` wins when a file has both |
 | `sidebar_grid` | `false` | Library entries as responsive cover cards instead of rows |
 | `tracklist_compact` | `false` | One-line track rows without covers |
 | `middle_click_autoscroll` | `false` | Linux only: middle-click a list to autoscroll it. Windows always autoscrolls and macOS never does |
@@ -307,9 +307,11 @@ and `--demo-show` adds surfaces on top of it: a comma separated list of
 `focus`, `winamp`, `playlist`, `eq`, `eq-shade`, `compact`, `update`, `personal-app`,
 `collection-loading`, `shuffle-selected`, `shuffle-started`, `library-list`,
 `library-list-narrow`, `library-list-wide`, `library-grid`, `library-grid-narrow`,
-`library-grid-wide`, `rtl`, `player-bar-spectrum`, `player-bar-waveform`,
-`lyrics-fullscreen-view`, `lyrics-fullscreen-instrumental`, `signed-out`, and `connecting`. The Library variants show the list or cover grid with
-a normal, narrow, or wide sidebar and collapsed artwork for matching captures.
+`library-grid-wide`, `library-compact`, `library-compact-narrow`,
+`library-compact-wide`, `rtl`, `player-bar-spectrum`, `player-bar-waveform`,
+`lyrics-fullscreen-view`, `lyrics-fullscreen-instrumental`, `signed-out`, and `connecting`. The Library variants show the list, the cover grid, or the
+compact list with a normal, narrow, or wide sidebar and collapsed artwork for
+matching captures.
 `shuffle-selected` and `shuffle-started` capture the selected-mode and
 playback-started outcomes of a collection Shuffle click. `update` shows a sample
 update badge for checking its layout. `personal-app` shows the personal Spotify

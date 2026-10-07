@@ -28,6 +28,51 @@ pub enum LibrarySort {
     Spotify,
 }
 
+/// How Your Library draws its entries. This is a view of the two saved flags
+/// rather than a field of its own, so settings files written before the
+/// sidebar had three layouts keep the layout they describe.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum LibraryLayout {
+    /// Cover cards that reflow with the sidebar's width.
+    Grid,
+    /// A cover, the name, and the owner on each row.
+    #[default]
+    List,
+    /// Single-line rows: the name alone, no cover and no owner.
+    Compact,
+}
+
+impl LibraryLayout {
+    /// The grid wins when a file saved both flags, matching how the sidebar
+    /// has always drawn that pair; moving off the grid then clears the stale
+    /// compact flag.
+    pub fn from_settings(settings: &Settings) -> Self {
+        if settings.sidebar_grid {
+            Self::Grid
+        } else if settings.sidebar_compact {
+            Self::Compact
+        } else {
+            Self::List
+        }
+    }
+
+    /// The order the sidebar's layout button walks, dropping one piece of
+    /// each row on every press: the grid's large covers, then the row covers,
+    /// then the owners.
+    pub fn next(self) -> Self {
+        match self {
+            Self::List => Self::Grid,
+            Self::Grid => Self::Compact,
+            Self::Compact => Self::List,
+        }
+    }
+
+    pub fn apply_to(self, settings: &mut Settings) {
+        settings.sidebar_grid = self == Self::Grid;
+        settings.sidebar_compact = self == Self::Compact;
+    }
+}
+
 impl LibrarySort {
     pub fn supports(self, shelf: LibraryShelf) -> bool {
         match self {
@@ -900,7 +945,7 @@ impl ManualProxy {
 
 #[cfg(test)]
 mod tests {
-    use super::Settings;
+    use super::{LibraryLayout, Settings};
 
     #[test]
     fn new_profiles_follow_the_system_and_saved_choices_are_preserved() {
@@ -1165,6 +1210,46 @@ mod tests {
         let json = serde_json::to_string(&settings).unwrap();
         let restored: Settings = serde_json::from_str(&json).unwrap();
         assert!(restored.sidebar_grid);
+    }
+
+    #[test]
+    fn the_saved_flags_name_one_library_layout_each() {
+        let layout = |grid, compact| {
+            LibraryLayout::from_settings(&Settings {
+                sidebar_grid: grid,
+                sidebar_compact: compact,
+                ..Settings::default()
+            })
+        };
+        assert_eq!(layout(false, false), LibraryLayout::List);
+        assert_eq!(layout(true, false), LibraryLayout::Grid);
+        assert_eq!(layout(false, true), LibraryLayout::Compact);
+        // A file that saved both reads as the grid, the way the sidebar has
+        // always drawn that pair.
+        assert_eq!(layout(true, true), LibraryLayout::Grid);
+    }
+
+    #[test]
+    fn the_library_layouts_cycle_and_clear_the_flags_they_leave() {
+        let mut settings = Settings {
+            sidebar_grid: true,
+            sidebar_compact: true,
+            ..Settings::default()
+        };
+        // Three presses from the grid return to it, and the stale compact
+        // flag the grid hid does not survive the first one.
+        for expected in [
+            LibraryLayout::Compact,
+            LibraryLayout::List,
+            LibraryLayout::Grid,
+        ] {
+            LibraryLayout::from_settings(&settings)
+                .next()
+                .apply_to(&mut settings);
+            assert_eq!(LibraryLayout::from_settings(&settings), expected);
+        }
+        assert!(settings.sidebar_grid);
+        assert!(!settings.sidebar_compact);
     }
 
     #[test]

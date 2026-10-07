@@ -1103,7 +1103,7 @@ pub enum Action {
         shelf: crate::settings::LibraryShelf,
         sort: crate::settings::LibrarySort,
     },
-    SetLibraryGrid(bool),
+    SetLibraryLayout(crate::settings::LibraryLayout),
     ToggleLibraryFolder(String),
     ArrangeLibrary {
         pinned: Vec<String>,

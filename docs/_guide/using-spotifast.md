@@ -136,6 +136,19 @@ filtering and sorting stay visible. Spotifast finishes saving your edits before
 loading changes from Spotify. If loading fails, your songs stay visible and
 you can choose **Retry**.
 
+## Library layouts
+
+The button above Your Library cycles three layouts, and it names and draws the
+one the next press gives:
+
+- **List**, the default: a cover, the name, and the owner on each row.
+- **Grid**: cover cards that reflow with the sidebar's width.
+- **Compact list**: the name alone, on single-line rows with no cover and no
+  owner, for fitting the most playlists on screen.
+
+The choice is saved with your settings. **Compact library sidebar** in
+Settings selects the compact list too.
+
 ## Playing from the sidebar
 
 Double-click a playlist, Liked Songs, album, artist, or podcast row in the

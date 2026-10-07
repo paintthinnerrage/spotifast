@@ -762,8 +762,19 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
             | "library-list-wide"
             | "library-grid"
             | "library-grid-narrow"
-            | "library-grid-wide" => {
-                app.settings.sidebar_grid = surface.starts_with("library-grid");
+            | "library-grid-wide"
+            | "library-compact"
+            | "library-compact-narrow"
+            | "library-compact-wide" => {
+                use crate::settings::LibraryLayout;
+                if surface.starts_with("library-grid") {
+                    LibraryLayout::Grid
+                } else if surface.starts_with("library-compact") {
+                    LibraryLayout::Compact
+                } else {
+                    LibraryLayout::List
+                }
+                .apply_to(&mut app.settings);
                 app.settings.art_expanded = false;
                 app.settings.sidebar_width = if surface.ends_with("-narrow") {
                     230.0
@@ -2208,29 +2219,97 @@ mod tests {
     }
 
     #[test]
-    fn library_grid_toggle_is_accessible_and_persistent() {
+    fn library_layout_button_cycles_through_the_three_layouts() {
+        use crate::settings::LibraryLayout;
         use egui::accesskit::{Action as AccessibleAction, Role};
-        let (ctx, mut app) = accessible_app("library-grid-toggle");
-        let tree = accessible_frame(&ctx, &mut app, vec![]);
-        let grid = accessible_node(&tree, "Show as grid", Role::Button);
-        accessible_frame(
-            &ctx,
-            &mut app,
-            vec![accessible_action(grid, AccessibleAction::Click, None)],
-        );
-        assert!(app.settings.sidebar_grid);
+        let (ctx, mut app) = accessible_app("library-layout-cycle");
+        // The list starts out, so the button offers each other layout in turn
+        // and comes back. Pressing the label the tree reports is the whole
+        // contract: a press moves to exactly the layout it names.
+        for (label, expected) in [
+            ("Show as grid", LibraryLayout::Grid),
+            ("Show as compact list", LibraryLayout::Compact),
+            ("Show as list", LibraryLayout::List),
+        ] {
+            let tree = accessible_frame(&ctx, &mut app, vec![]);
+            assert!(
+                tree.nodes.iter().any(|(_, node)| {
+                    node.role() == Role::Button && node.label() == Some("Discover Weekly")
+                }),
+                "{label}: the library keeps its rows in every layout"
+            );
+            let button = accessible_node(&tree, label, Role::Button);
+            accessible_frame(
+                &ctx,
+                &mut app,
+                vec![accessible_action(button, AccessibleAction::Click, None)],
+            );
+            assert_eq!(LibraryLayout::from_settings(&app.settings), expected);
+        }
+        app.backend.shutdown();
+    }
 
-        let tree = accessible_frame(&ctx, &mut app, vec![]);
-        let list = accessible_node(&tree, "Show as list", Role::Button);
-        assert!(tree.nodes.iter().any(|(_, node)| {
-            node.role() == Role::Button && node.label() == Some("Discover Weekly")
-        }));
-        accessible_frame(
-            &ctx,
-            &mut app,
-            vec![accessible_action(list, AccessibleAction::Click, None)],
+    /// The compact layout keeps the name and drops the "Playlist • owner"
+    /// line the plain list paints under it, so the two differ in what they
+    /// say and not only in row height.
+    #[test]
+    fn the_compact_layout_paints_names_without_owners() {
+        use crate::settings::LibraryLayout;
+        fn texts(shape: &egui::epaint::Shape, out: &mut Vec<String>) {
+            match shape {
+                egui::epaint::Shape::Text(text) => out.push(text.galley.job.text.clone()),
+                egui::epaint::Shape::Vec(shapes) => {
+                    shapes.iter().for_each(|shape| texts(shape, out));
+                }
+                _ => {}
+            }
+        }
+        let painted = |ctx: &egui::Context, app: &mut App| {
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1280.0, 800.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| app.frame_ui(ui),
+            );
+            output.textures_delta.clear();
+            let mut drawn = Vec::new();
+            output
+                .shapes
+                .iter()
+                .for_each(|shape| texts(&shape.shape, &mut drawn));
+            drawn
+        };
+        // The owner line is a translated template, so the rows are told apart
+        // by its prefix rather than by one demo account's name.
+        let owner_line = |drawn: &[String]| {
+            drawn
+                .iter()
+                .any(|text| text.starts_with("Playlist • ") && text.len() > "Playlist • ".len())
+        };
+
+        let (ctx, mut app) = accessible_app("library-compact-rows");
+        LibraryLayout::List.apply_to(&mut app.settings);
+        let drawn = painted(&ctx, &mut app);
+        assert!(drawn.iter().any(|text| text == "Discover Weekly"));
+        assert!(
+            owner_line(&drawn),
+            "the list names the owner under the name"
         );
-        assert!(!app.settings.sidebar_grid);
+
+        LibraryLayout::Compact.apply_to(&mut app.settings);
+        let drawn = painted(&ctx, &mut app);
+        assert!(
+            drawn.iter().any(|text| text == "Discover Weekly"),
+            "the compact layout keeps the name"
+        );
+        assert!(
+            !owner_line(&drawn),
+            "the compact layout drops the owner line"
+        );
         app.backend.shutdown();
     }
 

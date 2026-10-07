@@ -9032,8 +9032,8 @@ impl App {
                     self.mark_settings_dirty();
                 }
             }
-            Action::SetLibraryGrid(grid) => {
-                self.settings.sidebar_grid = grid;
+            Action::SetLibraryLayout(layout) => {
+                layout.apply_to(&mut self.settings);
                 self.mark_settings_dirty();
             }
             Action::ToggleLibraryFolder(id) => {
